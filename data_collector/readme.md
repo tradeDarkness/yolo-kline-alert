@@ -1,0 +1,1 @@
+这个脚本负责：接收信号、存入 tasks.json、倒计时 10 分钟、调用 AppleScript 切换 TradingView 并截图。

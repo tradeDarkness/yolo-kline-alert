@@ -19,9 +19,9 @@ def check():
 
     # 检查 YOLO
     try:
-        # 这里会自动下载 yolov8n.pt 模型，可能会稍微花点时间
-        model = YOLO('yolov8n.pt') 
-        print("✅ YOLOv8 imported and model loaded successfully.")
+        # 这里会自动下载 yolo11n.pt 模型，可能会稍微花点时间
+        model = YOLO('yolo11n.pt') 
+        print("✅ YOLO11 imported and model loaded successfully.")
     except Exception as e:
         print(f"❌ YOLO Error: {e}")
 
