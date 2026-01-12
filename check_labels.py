@@ -1,65 +1,66 @@
-#!/usr/bin/env python3
+#! /usr/bin/env python3
 """
-检查标注文件是否完整
+检查标注文件是否完整 (UP/DOWN Structure)
 """
 import os
 from pathlib import Path
 
-def check_labels():
-    images_dir = Path("data/images")
-    labels_dir = Path("data/labels")
-    
-    # 获取所有图片文件
+def check_dir(base_path, label_name):
+    p = Path(base_path)
+    if not p.exists():
+        print(f"❌ 目录不存在: {base_path}")
+        return 0, 0, []
+        
     image_extensions = ['.png', '.jpg', '.jpeg']
     image_files = []
     for ext in image_extensions:
-        image_files.extend(list(images_dir.glob(f"*{ext}")))
-    
-    print(f"📊 数据集检查报告")
-    print("=" * 60)
-    print(f"总图片数: {len(image_files)}")
-    
-    # 检查标注文件（优先检查 labels 目录，如果没有则在 images 目录）
-    labeled_count = 0
-    unlabeled_count = 0
-    unlabeled_files = []
-    
-    for img_file in image_files:
-        # 先检查 labels 目录
-        txt_file_in_labels = labels_dir / f"{img_file.stem}.txt"
-        # 再检查 images 目录（兼容两种组织方式）
-        txt_file_in_images = img_file.with_suffix('.txt')
+        image_files.extend(list(p.glob(f"*{ext}")))
         
-        if txt_file_in_labels.exists() and txt_file_in_labels.stat().st_size > 0:
-            labeled_count += 1
-        elif txt_file_in_images.exists() and txt_file_in_images.stat().st_size > 0:
-            labeled_count += 1
+    labeled = 0
+    unlabeled = 0
+    missing = []
+    
+    for img in image_files:
+        txt = img.with_suffix('.txt')
+        if txt.exists() and txt.stat().st_size > 0:
+            labeled += 1
         else:
-            unlabeled_count += 1
-            unlabeled_files.append(img_file.name)
+            unlabeled += 1
+            missing.append(img.name)
+            
+    print(f"\n📂 {label_name} ({base_path})")
+    print(f"   总数: {len(image_files)}")
+    print(f"   ✅ 已标注: {labeled}")
+    print(f"   ❌ 未标注: {unlabeled}")
     
-    print(f"✅ 已标注: {labeled_count} 张")
-    print(f"❌ 未标注: {unlabeled_count} 张")
+    if missing:
+        print(f"   ⚠️  前5个未标注: {missing[:5]}")
+        
+    return labeled, unlabeled, missing
+
+def check_labels():
+    print(f"📊 数据集检查报告 (data/ready_to_label)")
+    print("=" * 60)
     
-    if unlabeled_files:
-        print("\n⚠️  未标注的图片:")
-        for i, filename in enumerate(unlabeled_files[:10], 1):
-            print(f"   {i}. {filename}")
-        if len(unlabeled_files) > 10:
-            print(f"   ... 还有 {len(unlabeled_files) - 10} 张")
+    up_labeled, up_unlabeled, _ = check_dir("data/ready_to_label/UP", "UP Set")
+    down_labeled, down_unlabeled, _ = check_dir("data/ready_to_label/DOWN", "DOWN Set")
+    
+    total_labeled = up_labeled + down_labeled
+    total_unlabeled = up_unlabeled + down_unlabeled
     
     print("\n" + "=" * 60)
+    print(f"📈 总计已标注: {total_labeled}")
+    print(f"📉 总计未标注: {total_unlabeled}")
     
-    if unlabeled_count > 0:
-        print("💡 解决方案:")
-        print("   1. 使用 LabelImg 标注这些图片")
-        print("   2. 打开 LabelImg，选择 YOLO 格式")
-        print("   3. 打开目录: data/images/")
-        print("   4. 保存目录: data/images/ (与图片同目录)")
-        print("   5. 逐张标注均线密集形态")
+    if total_unlabeled > 0:
+        print("\n💡 标注说明:")
+        print("   1. 打开 LabelImg")
+        print("   2. 'Open Dir' -> 选择 data/ready_to_label/UP (或 DOWN)")
+        print("   3. 'Change Save Dir' -> 保持与图片同一目录")
+        print("   4. 标注 'cluster' 或 'signal'")
         return False
     else:
-        print("✅ 所有图片都已标注，可以开始训练！")
+        print("\n✅ 所有图片都已标注！")
         return True
 
 if __name__ == "__main__":
