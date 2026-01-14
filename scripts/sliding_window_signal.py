@@ -21,7 +21,7 @@ import numpy as np
 # 添加脚本目录到路径
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from okx_utils import fetch_candles
+from okx_utils import fetch_candles, get_top_volume_pairs
 from pine_signal_detector import PineSignalDetector, SignalConfig, detect_signals_in_window
 from chart_generator import ChartGenerator, ChartConfig, find_adhesion_region
 
@@ -195,6 +195,8 @@ def main():
                         help=f'单交易对符号 (default: {DEFAULT_SYMBOL})')
     parser.add_argument('--symbols', type=str, default=None,
                         help='多交易对符号列表 (逗号分隔)，例如: BTC-USDT-SWAP,ETH-USDT-SWAP')
+    parser.add_argument('--top', type=int, default=None,
+                        help='自动获取成交量前 N 的币种 (例如 50)，覆盖 symbols 参数')
     
     parser.add_argument('--bar', type=str, default=DEFAULT_BAR,
                         help=f'K线周期 (default: {DEFAULT_BAR})')
@@ -247,7 +249,13 @@ def main():
     
     # 确定要处理的 symbol 列表
     symbol_list = []
-    if args.symbols:
+    
+    if args.top:
+        print(f"🌟 正在获取 OKX 成交量前 {args.top} 的币种...")
+        symbol_list = get_top_volume_pairs(args.top)
+        print(f"👉 获取到: {len(symbol_list)} 个币种")
+        print(f"   列表: {symbol_list[:5]} ...")
+    elif args.symbols:
         symbol_list = [s.strip() for s in args.symbols.split(',') if s.strip()]
     else:
         symbol_list = [args.symbol]
